@@ -9,14 +9,26 @@ from gemini import *
 import os
 
 load_dotenv(".env")
-app: Flask = Flask(__name__, static_folder="../front/static/", static_url_path="/static", 
-                   template_folder="../front/pages/")
+app: Flask = Flask(__name__, static_folder="../front", static_url_path="/static", 
+                   template_folder="../front/")
 app.secret_key = "prettySecret"
 
-@app.route("/update", methods=["POST"])
-async def updateDB():
-    return "test"
+@app.route("/")
+def index():
+    return render_template("index.html")
 
+
+@app.route("/pick-side", methods=["POST"])
+async def pickSide():
+    data = request.get_json()
+    if not data:
+        return jsonify(response="error", message="Missing request data"), 400
+    activeCase = int(data["activeCase"])
+
+    court: Court = loadedCases[activeCase]
+    court.playerSide = Side.PROSECUTION if data["side"] == "prosecution" else Side.DEFENSE
+
+    return jsonify(response="success", case=court.to_dict()), 200
 
 @app.route("/create_case", methods=["GET"])
 async def createCase():
@@ -119,6 +131,8 @@ async def objection():
     )
     court.timeline.append(objection_event)
 
+
+
     # ---------------------------------------------
     # Generate the ruling using gemini.generate_ruling
     # ---------------------------------------------
@@ -138,4 +152,8 @@ async def objection():
         case=court.to_dict(),
         ruling=ruling_event.to_dict()
     ), 200
+
     
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=6767, debug=True, threaded=False)
+
