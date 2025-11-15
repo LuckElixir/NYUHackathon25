@@ -1,16 +1,18 @@
+import os
+
 from google import genai
 from dotenv import load_dotenv
 from savestates import *
 import json
 
-load_dotenv(".env")
+load_dotenv("../../.env")
 
 # Initialize Gemini client
 
-client = genai.Client()
+client = genai.Client(api_key=os.environ["TOKEN"])
 # The client gets the API key from the environment variable `GEMINI_API_KEY`.
 
-def generate_case(prompt: str = None) -> dict:
+def generate_case(query: str = None) -> dict:
     """
     Generate initial court case information using Gemini AI.
     
@@ -25,23 +27,36 @@ def generate_case(prompt: str = None) -> dict:
     """
 
     # Default prompt to produce strictly structured JSON
-    prompt = prompt or (
-        "Generate a simulated court case in JSON format exactly like this:\n"
-        "{\n"
-        '  "case_title": "<string>",\n'
-        '  "description": "<string>",\n'
-        '  "judge_name": "<string>",\n'
-        '  "prosecution_name": "<string>",\n'
-        '  "defense_name": "<string>",\n'
-        '  "player_side": "<PROSECUTION or DEFENSE>",\n'
-        '  "witnesses": ["<string>", "<string>", ...]\n'
-        "}\n\n"
-        "Ensure the JSON is valid and parsable. Provide names for judge, prosecution, defense, "
-        "and at least 1-3 witness names. Make it a realistic but fictional court case."
-    )
+    if query is None:
+        query = (
+            "Generate a simulated court case in JSON format exactly like this:\n"
+            "{\n"
+            '  "case_title": "<string>",\n'
+            '  "description": "<string>",\n'
+            '  "judge_name": "<string>",\n'
+            '  "prosecution_name": "<string>",\n'
+            '  "defense_name": "<string>",\n'
+            '  "player_side": "<PROSECUTION or DEFENSE>",\n'
+            '  "witnesses": ["<string>", "<string>", ...]\n'
+            "}\n\n"
+            "Ensure the JSON is valid and parsable. Provide names for judge, prosecution, defense, "
+            "and at least 1-3 witness names. Make it a realistic but fictional court case."
+        )
+
+    prompt = [
+        {
+            "file_data": {
+                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+                "mime_type": "application/pdf"  # or whatever the file type is
+            }
+        },
+        {
+            "text": query
+        }
+    ]
 
     response = client.models.generate_content(
-        model="gemini-2.5-lite",
+        model="gemini-2.0-flash",
         contents=prompt
     )
 
@@ -125,7 +140,7 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
         "timeline": [e.to_dict() for e in court_obj.timeline]
     }
 
-    prompt = (
+    query = (
         f"You are generating the next court event for the following case:\n"
         f"{json.dumps(context, indent=2)}\n\n"
         f"A ruling needs to be made for the following objection in the court case:\n"
@@ -135,6 +150,18 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
         "  - content: string explaining the judge's ruling\n"
         "Return only the JSON object."
     )
+
+    prompt = [
+        {
+            "file_data": {
+                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+                "mime_type": "application/pdf"  # or whatever the file type is
+            }
+        },
+        {
+            "text": query
+        }
+    ]
 
     response = client.models.generate_content(
         model="gemini-2.5-lite",

@@ -2,3 +2,5 @@
 /app/src/db/
 .env
 /venv/
+/.venv/
+/app/src/upload.py
