@@ -1,2 +1,4 @@
+.db
+/app/src/db/
 .env
 /venv/
