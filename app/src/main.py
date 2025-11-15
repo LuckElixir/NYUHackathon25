@@ -11,4 +11,8 @@ app: Flask = Flask(__name__, static_folder="../front/static/", static_url_path="
                    template_folder="../front/pages/")
 app.secret_key = "prettySecret"
 
+@app.route("/update", methods=["POST"])
+async def updateDB():
+    return "test"
+
 
