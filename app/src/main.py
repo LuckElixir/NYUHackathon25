@@ -42,7 +42,7 @@ async def createCase():
         court.witnesses[w] = Witness(w)
 
     # Return savestate
-    return jsonify(response="success", case=court.to_dict()), 200
+    return jsonify(response="success", caseNum=activeCase, case=court.to_dict()), 200
 
 
 
@@ -56,13 +56,55 @@ async def addEvent():
         return jsonify(response="error", message="Missing case_index or speaker"), 400
 
     case_index = data["case_index"]
-    speaker = data["speaker"]
     extra_prompt = data.get("prompt", "")
 
     if case_index < 0 or case_index >= len(loadedCases):
         return jsonify(response="error", message="Invalid case_index"), 400
 
-    court = loadedCases[case_index]
+    court : Court = loadedCases[case_index]
+
+
+    # Call Gemini to generate the event
+    try:
+        event_data = generate_event(court, extra_prompt)
+        event_type = event_data["type"]
+        content = event_data["content"]
+        speaker = event_data["speaker"]
+    except Exception as e:
+        return jsonify(response="error", message=f"Failed to generate AI event: {str(e)}"), 500
+
+    # Append new event
+    court.addEvent(speaker=speaker, event_type=event_type, content=content)
+
+    # Return updated court case
+    return jsonify(response="success", case=court.to_dict()), 200
+
+@app.route("/select_case", methods=["POST"])
+async def caseSelect():
+    data = request.get_json()
+    if not data:
+        return jsonify(response="error", message="Missing request data"), 400
+    activeCase = int(data["activeCase"])
+    court = loadedCases[activeCase]
+    return jsonify(response="success", case=court.to_dict()), 200
+
+@app.route("/object", methods=["POST"])
+async def objection():
+    data = request.get_json()
+    if not data:
+        return jsonify(response="error", message="Missing request data"), 400
+
+    for key in ["case_index", "speaker", "objection_type", "content"]:
+        if key not in data:
+            return jsonify(response="error", message=f"Missing field: {key}"), 400
+
+    activeCase = data["case_index"]
+    speaker = data["speaker"]
+    objection_type = data["objection_type"]
+    content = data["content"]
+
+
+    court = loadedCases[activeCase]
 
     # Validate speaker
     if speaker not in court.witnesses and speaker not in [
@@ -70,17 +112,30 @@ async def addEvent():
     ]:
         return jsonify(response="error", message="Speaker not valid for this court case"), 400
 
-    # Call Gemini to generate the event
+    objection_event = TimelineEvent(
+        speaker=speaker,
+        event_type=TimelineEventType.OBJECTION,
+        content=f"[{objection_type}] {content}"
+    )
+    court.timeline.append(objection_event)
+
+    # ---------------------------------------------
+    # Generate the ruling using gemini.generate_ruling
+    # ---------------------------------------------
     try:
-        event_data = generate_event(court, speaker, extra_prompt)
-        event_type = TimelineEventType[event_data["type"].upper()]
-        content = event_data["content"]
+        ruling_data = generate_ruling(court, objection_type)
+        ruling_event = TimelineEvent(
+            speaker=court.judge,
+            event_type=TimelineEventType.RULING,
+            content=ruling_data["content"]
+        )
+        court.timeline.append(ruling_event)
     except Exception as e:
-        return jsonify(response="error", message=f"Failed to generate AI event: {str(e)}"), 500
+        return jsonify(response="error", message=f"Failed to generate ruling: {str(e)}"), 500
 
-    # Append new event
-    new_event = TimelineEvent(speaker=speaker, event_type=event_type, content=content)
-    court.timeline.append(new_event)
-
-    # Return updated court case
-    return jsonify(response="success", case=court.to_dict()), 200
+    return jsonify(
+        response="success",
+        case=court.to_dict(),
+        ruling=ruling_event.to_dict()
+    ), 200
+    
