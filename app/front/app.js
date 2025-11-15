@@ -29,24 +29,16 @@ async function testConnection() {
 
 const state = {
   selectedCase: null,
-  transcript: [
-    { speaker: "Prosecutor", text: "State your name for the record." },
-    { speaker: "Witness", text: "My name is Jordan Ellis." },
-    { speaker: "Prosecutor", text: "Describe the night of May 4th." },
-    { speaker: "Witness", text: "I was behind the bar when the argument started." },
-    { speaker: "Prosecutor", text: "Did you see the defendant pull out a weapon?" },
-    { speaker: "Witness", text: "I saw the crowd back away before the glass broke." },
-    { speaker: "Prosecutor", text: "What happened after the defendant left?" },
-    { speaker: "Witness", text: "The manager counted the register and it was short." },
-    { speaker: "Prosecutor", text: "Was anyone injured?" },
-    { speaker: "Witness", text: "There were a few scratches, but no serious injury." },
-  ],
+  timeline: [],
   currentLineIndex: 0,
   isPlaying: false,
   activeCaseIndex: null,
   activeCase: null,
   playerSide: null,
 };
+
+const currentCaseTitle = () =>
+  state.activeCase?.case_information?.case_title ?? "Courtroom Simulator";
 
 const updateHeader = (title) => {
   const headerEl = document.getElementById("app-header-title");
@@ -61,9 +53,9 @@ const showScreen = (id) => {
   if (id === "case-selection") {
     updateHeader("Courtroom Simulator");
   } else if (id === "case-summary") {
-    updateHeader(state.selectedCase?.title ?? "Case Overview");
+    updateHeader(currentCaseTitle());
   } else if (id === "courtroom") {
-    updateHeader(`${state.selectedCase?.title ?? "Courtroom"} — Direct Examination`);
+    updateHeader(`${currentCaseTitle()} — Direct Examination`);
   } else if (id === "trial-summary") {
     updateHeader("Trial Summary");
   }
@@ -139,6 +131,27 @@ const clearTranscriptLines = () => {
   transcriptContainer.innerHTML = "";
 };
 
+const requestNextAIEvent = async (prompt = "") => {
+  if (state.activeCaseIndex === null) return;
+  const speaker =
+    state.playerSide === "prosecution"
+      ? state.activeCase.prosecution_name
+      : state.activeCase.defense_name;
+  const res = await apiPost("/ai-event", {
+    case_index: state.activeCaseIndex,
+    speaker: speaker,
+    prompt,
+  });
+  state.activeCase = res.case;
+  state.timeline = res.case.timeline || [];
+};
+
+const loadNextEventIfNeeded = async () => {
+  if (state.currentLineIndex >= state.timeline.length) {
+    await requestNextAIEvent();
+  }
+};
+
 const typingState = {
   msgEl: null,
   cursor: null,
@@ -200,9 +213,11 @@ const typeLine = (msgEl, text, callback) => {
   continueTyping();
 };
 
-const addNextTranscriptLine = () => {
+const addNextTranscriptLine = async () => {
   if (!transcriptContainer) return;
-  if (state.currentLineIndex >= state.transcript.length) {
+  await loadNextEventIfNeeded();
+
+  if (state.currentLineIndex >= state.timeline.length) {
     setTranscriptStatus("Direct examination complete");
     isPlaying = false;
     state.isPlaying = false;
@@ -211,7 +226,7 @@ const addNextTranscriptLine = () => {
     return;
   }
 
-  const line = state.transcript[state.currentLineIndex];
+  const line = state.timeline[state.currentLineIndex];
   const entry = document.createElement("div");
   entry.className = "transcript-line";
   entry.innerHTML = `
@@ -234,7 +249,7 @@ const scheduleNextLine = () => {
   if (!isPlaying) return;
 
   playbackTimer = setTimeout(() => {
-    addNextTranscriptLine();
+    void addNextTranscriptLine();
   }, 2500 + Math.random() * 500);
 };
 
@@ -260,18 +275,35 @@ const pausePlayback = () => {
   setTranscriptStatus("Paused for objection");
 };
 
-const handleObjection = (type) => {
+const applyRuling = (ruling) => {
+  const isSustained = ruling.content.toLowerCase().includes("sustain");
+  if (isSustained) {
+    rulingCounts.sustained += 1;
+  } else {
+    rulingCounts.overruled += 1;
+  }
+  const outcome = isSustained ? "Sustained" : "Overruled";
+  if (rulingText) rulingText.textContent = outcome;
+  if (sustainedCountEl) sustainedCountEl.textContent = `Sustained: ${rulingCounts.sustained}`;
+  if (overruledCountEl) overruledCountEl.textContent = `Overruled: ${rulingCounts.overruled}`;
+  openJudgeModal(outcome, ruling.content);
+};
+
+const handleObjection = async (type) => {
   pausePlayback();
   if (pauseToggle) {
     pauseToggle.textContent = "Resume";
   }
-  const outcome = Math.random() < 0.5 ? "Sustained" : "Overruled";
-  rulingCounts[outcome === "Sustained" ? "sustained" : "overruled"] += 1;
-  if (rulingText) rulingText.textContent = outcome;
-  if (sustainedCountEl) sustainedCountEl.textContent = `Sustained: ${rulingCounts.sustained}`;
-  if (overruledCountEl) overruledCountEl.textContent = `Overruled: ${rulingCounts.overruled}`;
-  setTranscriptStatus(`Paused for objection – ${outcome}`);
-  openJudgeModal(outcome, rulingNarratives[outcome]);
+  const res = await apiPost("/object", {
+    case_index: state.activeCaseIndex,
+    speaker: state.playerSide,
+    objection_type: type,
+    content: "Objection!",
+  });
+  state.activeCase = res.case;
+  state.timeline = res.case.timeline || [];
+  setTranscriptStatus(`Paused for objection – ${res.ruling?.content ?? "Ruling pending"}`);
+  applyRuling(res.ruling);
 };
 
 const populateCaseSummaryFromBackend = () => {
@@ -323,6 +355,7 @@ const closeJudgeModal = () => {
   if (pauseToggle) {
     pauseToggle.textContent = "Pause";
   }
+  state.currentLineIndex = state.timeline.length;
   startPlayback();
 };
 
@@ -389,6 +422,8 @@ const pickSide = async (side) => {
     state.activeCase = updated.case;
     state.playerSide = side;
     state.selectedCase = state.activeCase;
+    state.timeline = state.activeCase.timeline || [];
+    state.currentLineIndex = 0;
     populateCaseSummaryFromBackend();
     showScreen("case-summary");
   } catch (err) {
@@ -429,6 +464,8 @@ const createCaseAndSelect = async () => {
   });
   state.activeCase = selected.case;
   state.selectedCase = state.activeCase;
+  state.timeline = state.activeCase.timeline || [];
+  state.currentLineIndex = 0;
 };
 
 const handleCaseCardClick = async (card) => {
@@ -478,8 +515,9 @@ document.getElementById("back-to-selection")?.addEventListener("click", () => {
   showScreen("case-selection");
 });
 
-document.getElementById("start-exam")?.addEventListener("click", () => {
+document.getElementById("start-exam")?.addEventListener("click", async () => {
   resetTranscript();
+  await requestNextAIEvent();
   showScreen("courtroom");
   startPlayback();
 });
@@ -491,7 +529,6 @@ document.getElementById("return-selection")?.addEventListener("click", () => {
 document.getElementById("continue-to-summary")?.addEventListener("click", () => {
   showTrialSummary();
 });
-
 document.getElementById("choose-prosecution")?.addEventListener("click", () => {
   pickSide("prosecution");
 });
