@@ -1,0 +1,38 @@
+Mock Trial Rules of Evidence Study Guide
+(Updated October 16, 2023)
+
+The following chart is provided only as a study guide for students, for quick reference.
+It is NOT meant to replace the Mock Trial Rules of Evidence in Part VI of the Mock Trial Workbook.
+The chart will NOT be distributed to mock trial judges and should NOT be presented to judges at trial.
+
+OBJECTION | RULE | EXPLANATION
+Irrelevant evidence | 401 - 402 | Testimony is irrelevant to the facts of the case.
+Evidence is unfairly prejudicial, confusing, or waste of time | 403 | Evidence may be excluded at the discretion of the presiding judge if it is unfairly prejudicial, may confuse the issue or is a waste of time.
+Compound question | 403 | Counsel is asking the witness a compound question.
+Mischaracterization of testimony | 403 | Counsel is mischaracterizing the witness' testimony.
+Assuming facts not in evidence | 403 | Counsel's question assumes facts not in evidence.
+Unfair extrapolation | 403 | Witness' testimony is unfair extrapolation beyond the witness' statement or reasonable inference.
+Improper character testimony | 404(a) | Evidence of a person's character trait is not admissible to prove action in accordance with the trait.
+Improper use of crimes, wrongs | 404(b) | Crimes/wrongs are inadmissible to prove character or conformity.
+Crimes/wrongs admissible | 404(b) | They may prove motive, opportunity, intent, plan, identity, absence of mistake, etc.
+Proving character | 405 | Methods: reputation/opinion; specific instances when essential to claim/defense.
+Character exception | 406 | Habit or routine practice evidence is admissible.
+Lack of personal knowledge | 602 | Witness lacks personal knowledge needed to answer.
+Speculation | 602 | Calls for speculation.
+Argumentative question | 611a | Question is argumentative.
+Narrative answer | 611b | Question calls for a narrative.
+Leading question | 611b | Counsel is leading the witness.
+Non-responsive answer | 611b | Answer is not responsive.
+Beyond the scope | 611d | Beyond the scope of cross-exam or redirect.
+Opinion | 701 | Calling for opinion.
+Opinion Exception (Lay Witness) | 701 | Lay opinion allowed if rationally based on perception and helpful.
+Hearsay | 801, 802 | Question calls for hearsay; must instruct jury to disregard.
+Not hearsay (Admission Against Interest) | 801(d)1 | Party’s statement against their own interest.
+Not hearsay (Opposing Party’s Statement) | 801(d)2 | Statement by opposing party offered against them.
+Exception: Present Sense Impression | 803(1) | Statement describing event made while/immediately after perceiving it.
+Exception: Excited Utterance | 803(2) | Statement made under stress of excitement.
+Exception: State of Mind | 803(3) | Statement describing declarant’s state of mind.
+Hearsay within hearsay | 805 | Allowed if each layer fits an exception.
+Lack of proper foundation | 1203 | Foundation not laid (often experts or exhibits).
+Improper conclusion of law | 1203 | Witness asked to give a legal conclusion.
+Statement of Facts | 5:1-2 | Facts and stipulations may not be disputed.
