@@ -1,0 +1,11 @@
+{
+  "include": ["app"],
+  "exclude": ["**/__pycache__"],
+  "strict": true,
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "basic",
+  "venvPath": ".",
+  "venv": "venv",
+  "reportArgumentType" : "warning",
+  "extraPaths":["/venv/Lib/site-packages/"]
+}
