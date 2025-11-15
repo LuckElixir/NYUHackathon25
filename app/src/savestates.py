@@ -3,6 +3,10 @@ import json
 from enum import Enum
 from datetime import datetime
 
+loadedCases = []
+
+# index of loadedCases that is active right now
+activeCase: int = 0
 
 class Side(Enum):
     PROSECUTION = 0
