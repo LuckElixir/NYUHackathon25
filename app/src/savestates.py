@@ -9,8 +9,8 @@ loadedCases = []
 activeCase: int = 0
 
 class Side(Enum):
-    PROSECUTION = 0
-    DEFENSE = 1
+    PROSECUTION = "prosecution"
+    DEFENSE = "defense"
 
 
 class Witness:

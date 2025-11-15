@@ -1,3 +1,32 @@
+const API_BASE = "http://127.0.0.1:6767";
+
+async function apiGet(path) {
+  const res = await fetch(API_BASE + path, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+  return res.json();
+}
+
+async function apiPost(path, data) {
+  const res = await fetch(API_BASE + path, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+async function testConnection() {
+  try {
+    console.log("Testing backend connectivity...");
+    const result = await apiGet("/ping");
+    console.log("Backend ping result:", result);
+  } catch (err) {
+    console.error("Backend connection failed:", err);
+  }
+}
+
 const state = {
   selectedCase: null,
   transcript: [
@@ -14,6 +43,9 @@ const state = {
   ],
   currentLineIndex: 0,
   isPlaying: false,
+  activeCaseIndex: null,
+  activeCase: null,
+  playerSide: null,
 };
 
 const updateHeader = (title) => {
@@ -242,42 +274,15 @@ const handleObjection = (type) => {
   openJudgeModal(outcome, rulingNarratives[outcome]);
 };
 
-const caseProfiles = {
-  riverside: {
-    title: "State v. Martinez",
-    charges: "Robbery in the first degree; Assault with a deadly weapon",
-    description: "Defense argues the defendant grabbed a crowbar to protect a friend from a violent patron.",
-    prosecution: "The State will present security footage showing the defendant near the register with a weapon.",
-    defense: "Claim of self-defense once a threatening bystander lunged at the defendant’s friend.",
-  },
-  downtown: {
-    title: "State v. Lee",
-    charges: "Burglary; Grand larceny",
-    description: "Police say the defendant was seen near the jewelry counter before a necklace disappeared.",
-    prosecution: "Surveillance and eyewitness testimony tie the defendant to the counter when the glass opened.",
-    defense: "Video is ambiguous and the defendant had means to remove the necklace legally.",
-  },
-  campus: {
-    title: "State v. Lin",
-    charges: "Disorderly conduct; Resisting arrest",
-    description: "The protest escalated when police tried to clear the lawn and the defendant held the line.",
-    prosecution: "Officers claim the defendant refused orders and physically resisted the barricade.",
-    defense: "Harper peacefully protested and refused to leave until backup arrived.",
-  },
-};
-
-const populateCaseSummary = (profile) => {
-  const titleEl = document.getElementById("case-title");
-  const chargesEl = document.getElementById("case-charges");
-  const descriptionEl = document.getElementById("case-description");
-  const prosecutionEl = document.getElementById("prosecution-narrative");
-  const defenseEl = document.getElementById("defense-position");
-
-  if (titleEl) titleEl.textContent = profile.title;
-  if (chargesEl) chargesEl.textContent = profile.charges;
-  if (descriptionEl) descriptionEl.textContent = profile.description;
-  if (prosecutionEl) prosecutionEl.textContent = profile.prosecution;
-  if (defenseEl) defenseEl.textContent = profile.defense;
+const populateCaseSummaryFromBackend = () => {
+  if (!state.activeCase) return;
+  const caseInfo = state.activeCase.case_information || {};
+  document.getElementById("case-title").textContent = caseInfo.case_title || "Untitled Case";
+  document.getElementById("case-charges").textContent = (caseInfo.charges || []).join(", ");
+  document.getElementById("case-description").textContent = caseInfo.description || "";
+  document.getElementById("prosecution-narrative").textContent =
+    caseInfo.prosecution_narrative || "";
+  document.getElementById("defense-position").textContent = caseInfo.defense_position || "";
 };
 
 const renderObjectionButtons = () => {
@@ -374,6 +379,23 @@ const showTrialSummary = () => {
   summary?.classList.add("fade-in");
 };
 
+const pickSide = async (side) => {
+  if (state.activeCaseIndex === null) return;
+  try {
+    const updated = await apiPost("/pick-side", {
+      activeCase: state.activeCaseIndex,
+      side,
+    });
+    state.activeCase = updated.case;
+    state.playerSide = side;
+    state.selectedCase = state.activeCase;
+    populateCaseSummaryFromBackend();
+    showScreen("case-summary");
+  } catch (err) {
+    console.error("Failed to pick side", err);
+  }
+};
+
 const resetTranscript = () => {
   clearTranscriptLines();
   state.currentLineIndex = 0;
@@ -391,28 +413,43 @@ const resetTranscript = () => {
 const setSelectedCard = (card) => {
   caseCards.forEach((entry) => entry.classList.remove("selected"));
   card.classList.add("selected");
-  const caseName = card.querySelector("h2")?.textContent?.trim() ?? null;
-  state.selectedCase = caseName;
   if (continueButton) {
     continueButton.disabled = false;
     continueButton.classList.add("is-ready");
   }
-  const caseKey = card.dataset.case;
-  if (caseKey && caseProfiles[caseKey]) {
-    populateCaseSummary(caseProfiles[caseKey]);
-    showScreen("case-summary");
+};
+
+const createCaseAndSelect = async () => {
+  const created = await apiGet("/create_case");
+  state.activeCaseIndex = created.caseNum;
+  state.activeCase = created.case;
+  state.selectedCase = state.activeCase;
+  const selected = await apiPost("/select_case", {
+    activeCase: state.activeCaseIndex,
+  });
+  state.activeCase = selected.case;
+  state.selectedCase = state.activeCase;
+};
+
+const handleCaseCardClick = async (card) => {
+  setSelectedCard(card);
+  try {
+    await createCaseAndSelect();
+    showScreen("side-selection");
+  } catch (err) {
+    console.error("Case selection failed", err);
   }
 };
 
 caseCards.forEach((card) => {
-  card.addEventListener("click", () => setSelectedCard(card));
+  card.addEventListener("click", () => handleCaseCardClick(card));
 });
 
 selectButtons.forEach((button) => {
   button.addEventListener("click", (event) => {
     event.stopPropagation();
     const card = button.closest(".case-card");
-    if (card) setSelectedCard(card);
+    if (card) handleCaseCardClick(card);
   });
 });
 
@@ -455,6 +492,14 @@ document.getElementById("continue-to-summary")?.addEventListener("click", () => 
   showTrialSummary();
 });
 
+document.getElementById("choose-prosecution")?.addEventListener("click", () => {
+  pickSide("prosecution");
+});
+
+document.getElementById("choose-defense")?.addEventListener("click", () => {
+  pickSide("defense");
+});
+
 const enableHeaderShrink = () => {
   const header = document.getElementById("app-header");
   if (!header) return;
@@ -468,5 +513,7 @@ const enableHeaderShrink = () => {
 };
 
 enableHeaderShrink();
+
+testConnection();
 
 export { showScreen, state };

@@ -5,7 +5,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Hackathon UI</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="static/styles.css" />
 </head>
 
 <body>
@@ -76,6 +76,17 @@
       <div class="actions">
         <button id="back-to-selection" class="btn secondary" type="button">Back</button>
         <button id="start-exam" class="btn primary" type="button">Start Direct Examination</button>
+      </div>
+    </div>
+
+    <div id="side-selection" class="screen hidden">
+      <header>
+        <p class="eyebrow">Choose Your Side</p>
+        <h1>Select a Role</h1>
+      </header>
+      <div class="actions">
+        <button id="choose-prosecution" class="btn primary" type="button">Prosecution</button>
+        <button id="choose-defense" class="btn secondary" type="button">Defense</button>
       </div>
     </div>
 
@@ -164,7 +175,7 @@
       </div>
     </div>
   </div>
-  <script type="module" src="app.js" defer></script>
+  <script type="module" src="static/app.js" defer></script>
 </body>
 
 </html>

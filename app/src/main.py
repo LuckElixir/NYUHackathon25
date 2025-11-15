@@ -153,6 +153,10 @@ async def objection():
         ruling=ruling_event.to_dict()
     ), 200
 
+@app.route("/ping")
+async def ping():
+    return jsonify(response="success", message="pong"), 200
+
     
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=6767, debug=True, threaded=False)
