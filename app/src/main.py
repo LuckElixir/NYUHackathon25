@@ -13,10 +13,17 @@ app: Flask = Flask(__name__, static_folder="../front/static/", static_url_path="
                    template_folder="../front/pages/")
 app.secret_key = "prettySecret"
 
-@app.route("/update", methods=["POST"])
-async def updateDB():
-    return "test"
+@app.route("/pick-side", methods=["POST"])
+async def pickSide():
+    data = request.get_json()
+    if not data:
+        return jsonify(response="error", message="Missing request data"), 400
+    activeCase = int(data["activeCase"])
 
+    court: Court = loadedCases[activeCase]
+    court.playerSide = Side.PROSECUTION if data["side"] == "prosecution" else Side.DEFENSE
+
+    return jsonify(response="success", case=court.to_dict()), 200
 
 @app.route("/create_case", methods=["GET"])
 async def createCase():
