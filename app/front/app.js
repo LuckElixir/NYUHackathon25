@@ -122,25 +122,31 @@ async function sendObjection(type) {
     return;
   }
 
-  state.caseData = data.case;
-  renderTimeline();
+state.caseData = data.case;
+renderTimeline();
 
-  // Show Judge Ruling Modal
+// --- Update the sidebar ruling summary ---
+document.getElementById("last-ruling-text").textContent = data.ruling.decision;
+
+// Show Judge Ruling Modal
 const outcomeEl = document.getElementById("ruling-outcome");
 const explanationEl = document.getElementById("ruling-explanation");
 
 outcomeEl.textContent = data.ruling.decision;
 explanationEl.textContent = data.ruling.content;
 
-// Reset classes
+// Clear old classes
 outcomeEl.classList.remove("judge-sustained", "judge-overruled");
 
 // Apply color
-if (data.ruling.decision.toLowerCase().includes("overruled")) {
+const decisionLower = data.ruling.decision.toLowerCase();
+if (decisionLower.includes("overruled")) {
   outcomeEl.classList.add("judge-overruled");
-} else if (data.ruling.decision.toLowerCase().includes("sustain")) {
+} else if (decisionLower.includes("sustain")) {
   outcomeEl.classList.add("judge-sustained");
 }
+
+document.getElementById("judge-modal").classList.remove("hidden");
 
 function buildTimelinePrompt() {
   const timeline = state.caseData?.timeline || [];
