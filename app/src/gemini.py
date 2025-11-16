@@ -101,6 +101,7 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
     }
 
 
+
     query = (
             f"You are generating the next court event for the following case:\n"
             f"{json.dumps(context, indent=2)}\n\n"
@@ -123,6 +124,7 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
             "text": query
         }
     ]
+
 
 
 
