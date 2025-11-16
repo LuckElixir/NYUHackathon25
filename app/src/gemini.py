@@ -96,16 +96,29 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
         "timeline": [e.to_dict() for e in court_obj.timeline]
     }
 
-    prompt = (
-        f"You are generating the next court event for the following case:\n"
-        f"{json.dumps(context, indent=2)}\n\n"
-        f"{extra_prompt}\n"
-        "Return a single JSON object with keys:\n"
-        "  - type: one of OPENING, CLOSING, OBJECTION, RULING, STATEMENT, GENERAL\n"
-        "  - content: string containing the statement or action\n"
-        f"  - speaker: a speaker or witness that is NOT {court_obj.playerSide.name}"
-        "Do not include anything else, only a JSON object."
-    )
+
+    query = (
+            f"You are generating the next court event for the following case:\n"
+            f"{json.dumps(context, indent=2)}\n\n"
+            f"{extra_prompt}\n"
+            "Return a single JSON object with keys:\n"
+            "  - type: one of OPENING, CLOSING, OBJECTION, RULING, STATEMENT, GENERAL\n"
+            "  - content: string containing the statement or action\n"
+            f"  - speaker: a speaker or witness that is NOT {court_obj.playerSide.name}"
+            "Do not include anything else, only a JSON object."
+        )
+
+    prompt = [
+        {
+            "file_data": {
+                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+                "mime_type": "application/pdf"  # or whatever the file type is
+            }
+        },
+        {
+            "text": query
+        }
+    ]
 
     response = client.models.generate_content(
         model="gemini-2.5-lite",
@@ -150,7 +163,21 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
         "  - content: string explaining the judge's ruling\n"
         "Return only the JSON object."
     )
-
+    if query is None:
+        query = (
+            "Generate a simulated court case in JSON format exactly like this:\n"
+            "{\n"
+            '  "case_title": "<string>",\n'
+            '  "description": "<string>",\n'
+            '  "judge_name": "<string>",\n'
+            '  "prosecution_name": "<string>",\n'
+            '  "defense_name": "<string>",\n'
+            '  "player_side": "<PROSECUTION or DEFENSE>",\n'
+            '  "witnesses": ["<string>", "<string>", ...]\n'
+            "}\n\n"
+            "Ensure the JSON is valid and parsable. Provide names for judge, prosecution, defense, "
+            "and at least 1-3 witness names. Make it a realistic but fictional court case."
+        )
     prompt = [
         {
             "file_data": {
@@ -176,7 +203,6 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
 
     if event_data["type"].upper() not in TimelineEventType.__members__:
         raise ValueError(f"Invalid event type from Gemini: {event_data['type']}")
-
     return event_data
 
 if __name__ == "__main__":
