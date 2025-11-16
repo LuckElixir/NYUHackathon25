@@ -92,6 +92,7 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
         f"  - speaker: a speaker or witness that is NOT {court_obj.playerSide.name}"
         "Do not include anything else, only a JSON object."
         "THE SPEAKER MUST NOT BE THE PLAYER'S SIDE. DO NOT MAKE AN OBJECTION HERE UNDER ANY CIRCUMSTANCES."
+        "REMINDER: IF THE PLAYER IS PROSECUTION, THE SPEAKER MUST BE DEFENSE OR A WITNESS, AND VICE VERSA."
     )
 
     response = client.models.generate_content(

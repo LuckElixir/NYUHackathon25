@@ -112,9 +112,23 @@ async function sendObjection(type) {
   renderTimeline();
 
   // Show Judge Ruling Modal
-  document.getElementById("ruling-outcome").textContent = data.ruling.decision;
-  document.getElementById("ruling-explanation").textContent = data.ruling.content;
-  document.getElementById("judge-modal").classList.remove("hidden");
+const outcomeEl = document.getElementById("ruling-outcome");
+const explanationEl = document.getElementById("ruling-explanation");
+
+outcomeEl.textContent = data.ruling.decision;
+explanationEl.textContent = data.ruling.content;
+
+// Reset classes
+outcomeEl.classList.remove("judge-sustained", "judge-overruled");
+
+// Apply color
+if (data.ruling.decision.toLowerCase().includes("overruled")) {
+  outcomeEl.classList.add("judge-overruled");
+} else if (data.ruling.decision.toLowerCase().includes("sustain")) {
+  outcomeEl.classList.add("judge-sustained");
+}
+
+document.getElementById("judge-modal").classList.remove("hidden");
 }
 
 
@@ -147,10 +161,36 @@ function renderTimeline() {
     const wrapper = document.createElement("div");
     wrapper.className = "transcript-line";
 
-    wrapper.innerHTML = `
-      <div class="meta">[${ev.type}] ${ev.speaker}:</div>
-      <div class="content">${ev.content}</div>
-    `;
+let tagClass = "";
+let lineClass = "";
+
+if (ev.type === "OBJECTION") {
+  tagClass = "event-objection";
+  lineClass = "timeline-objection";
+}
+else if (ev.type === "RULING") {
+  // Determine sustained / overruled from content text
+  const isOverruled = ev.content.toLowerCase().includes("overruled");
+  const isSustained = ev.content.toLowerCase().includes("sustain");
+
+  if (isOverruled) {
+    tagClass = "event-ruling-overruled";
+    lineClass = "timeline-ruling-overruled";
+  } else if (isSustained) {
+    tagClass = "event-ruling-sustained";
+    lineClass = "timeline-ruling-sustained";
+  }
+}
+
+wrapper.className = `transcript-line ${lineClass}`;
+
+wrapper.innerHTML = `
+  <div class="meta">
+    <span class="event-tag ${tagClass}">[${ev.type}]</span>
+    ${ev.speaker}:
+  </div>
+  <div class="content">${ev.content}</div>
+`;
 
     container.appendChild(wrapper);
 
