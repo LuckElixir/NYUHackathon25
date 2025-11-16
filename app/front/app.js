@@ -33,6 +33,18 @@ function disableAutoLoop() {
   state.autoLoopTimer = null;
 }
 
+function buildTimelinePrompt() {
+  const timeline = state.caseData?.timeline || [];
+  if (!timeline.length) return "";
+
+  const recent = timeline
+    .slice(-10)
+    .map((ev) => `[${ev.type}] ${ev.speaker}: ${ev.content}`)
+    .join("\n");
+
+  return `You are continuing a courtroom transcript. Recent context:\n${recent}\nContinue with the next natural event.`;
+}
+
 
 // ----------------------------------------------
 // API CALL HELPERS
@@ -65,6 +77,7 @@ async function pickSide(side) {
 }
 
 async function generateAIEvent() {
+  const prompt = buildTimelinePrompt();
   const res = await fetch("/ai-event", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -73,7 +86,8 @@ async function generateAIEvent() {
       speaker:
         state.playerSide === "prosecution"
           ? state.caseData.prosecution_name
-          : state.caseData.defense_name
+          : state.caseData.defense_name,
+      prompt
     })
   });
 
@@ -126,6 +140,17 @@ if (data.ruling.decision.toLowerCase().includes("overruled")) {
   outcomeEl.classList.add("judge-overruled");
 } else if (data.ruling.decision.toLowerCase().includes("sustain")) {
   outcomeEl.classList.add("judge-sustained");
+}
+
+function buildTimelinePrompt() {
+  const timeline = state.caseData?.timeline || [];
+  if (!timeline.length) return "";
+
+  const recent = timeline.slice(-10)
+    .map(ev => `[${ev.type}] ${ev.speaker}: ${ev.content}`)
+    .join("\n");
+
+  return `You are continuing a courtroom transcript. Recent context:\n${recent}\nContinue with the next natural event.`;
 }
 
 document.getElementById("judge-modal").classList.remove("hidden");
