@@ -100,17 +100,34 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
         "timeline": [e.to_dict() for e in court_obj.timeline]
     }
 
-    prompt = (
-        f"You are generating the next court event for the following case:\n"
-        f"{json.dumps(context, indent=2)}\n\n"
-        f"{extra_prompt}\n"
-        "Return a single JSON object with keys:\n"
-        "  - type: one of OPENING, CLOSING, RULING, STATEMENT, GENERAL\n"
-        "  - content: string containing the statement or action\n"
-        f"  - speaker: a speaker or witness that is NOT {court_obj.playerSide.name}"
-        "Do not include anything else, only a JSON object."
-        "THE SPEAKER MUST NOT BE THE PLAYER'S SIDE. DO NOT MAKE AN OBJECTION HERE UNDER ANY CIRCUMSTANCES."
-    )
+
+
+    query = (
+            f"You are generating the next court event for the following case:\n"
+            f"{json.dumps(context, indent=2)}\n\n"
+            f"{extra_prompt}\n"
+            "Return a single JSON object with keys:\n"
+            "  - type: one of OPENING, CLOSING, OBJECTION, RULING, STATEMENT, GENERAL\n"
+            "  - content: string containing the statement or action\n"
+            f"  - speaker: a speaker or witness that is NOT {court_obj.playerSide.name}"
+            "Do not include anything else, only a JSON object."
+        )
+
+    prompt = [
+        {
+            "file_data": {
+                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+                "mime_type": "application/pdf"  # or whatever the file type is
+            }
+        },
+        {
+            "text": query
+        }
+    ]
+
+
+
+
 
     response = client.models.generate_content(
         model=MODEL,
@@ -185,7 +202,6 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
 
     if event_data["type"].upper() not in TimelineEventType.__members__:
         raise ValueError(f"Invalid event type from Gemini: {event_data['type']}")
-
     return event_data
 
 if __name__ == "__main__":
