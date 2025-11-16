@@ -4,45 +4,32 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hackathon UI</title>
+  <title>Courtroom Simulator</title>
   <link rel="stylesheet" href="static/styles.css" />
 </head>
 
 <body>
   <div id="app" class="dark-bg">
+
     <header id="app-header" class="app-header">
       <h1 id="app-header-title">Courtroom Simulator</h1>
     </header>
-    <div id="case-selection" class="screen">
+
+    <!-- SCREEN 1 - CREATE CASE -->
+    <div id="case-generation" class="screen">
       <header>
         <p class="eyebrow">Start a Criminal Trial</p>
-        <h1>Choose a case to defend</h1>
+        <h1>Generate a New AI Case</h1>
       </header>
 
-      <div class="case-grid">
-        <article class="case-card" data-case="riverside">
-          <h2>Robbery at Riverside Bar</h2>
-          <p>The bartender says the defendant used a crowbar after an altercation to remove cash from the till.</p>
-          <button class="btn select-btn" type="button">Select</button>
-        </article>
-
-        <article class="case-card" data-case="downtown">
-          <h2>Downtown Jewelry Heist</h2>
-          <p>Security footage places the defendant near the showcase minutes before a necklace disappeared.</p>
-          <button class="btn select-btn" type="button">Select</button>
-        </article>
-
-        <article class="case-card" data-case="campus">
-          <h2>Campus Protest Disruption</h2>
-          <p>An officer claims the defendant blocked the walkway and resisted orders to disperse.</p>
-          <button class="btn select-btn" type="button">Select</button>
-        </article>
-      </div>
-
-      <div class="actions">
-        <button class="btn primary" type="button" disabled>Continue</button>
+      <div class="actions center">
+        <button id="btn-generate-case" class="btn primary" type="button">
+          Generate Case
+        </button>
       </div>
     </div>
+
+    <!-- SCREEN 2 - CASE SUMMARY + PICK SIDE -->
     <div id="case-summary" class="screen hidden">
       <header>
         <p class="eyebrow">Case Overview</p>
@@ -51,131 +38,105 @@
 
       <div class="summary-panel">
         <section>
-          <h2>Charges</h2>
-          <p id="case-charges"></p>
+          <h2>Case Description</h2>
+          <p id="case-description"></p>
         </section>
 
         <section>
-          <h2>Incident Summary</h2>
-          <p id="case-description"></p>
+          <h2>Judge</h2>
+          <p id="judge-name"></p>
         </section>
 
         <section class="two-column">
           <div>
-            <h3>Prosecution Narrative</h3>
-            <p id="prosecution-narrative"></p>
+            <h3>Prosecution</h3>
+            <p id="prosecution-name"></p>
           </div>
 
           <div>
-            <h3>Defense Position</h3>
-            <p id="defense-position"></p>
+            <h3>Defense</h3>
+            <p id="defense-name"></p>
           </div>
+        </section>
+
+        <section>
+          <h2>Witnesses</h2>
+          <ul id="witness-list"></ul>
+        </section>
+
+        <section id="side-selection">
+          <h2>Your Role</h2>
+          <div class="side-buttons">
+            <button id="btn-side-prosecution" class="btn secondary">Prosecution</button>
+            <button id="btn-side-defense" class="btn secondary">Defense</button>
+          </div>
+          <p id="selected-side-label" class="text-muted"></p>
         </section>
       </div>
 
       <div class="actions">
-        <button id="back-to-selection" class="btn secondary" type="button">Back</button>
-        <button id="start-exam" class="btn primary" type="button">Start Direct Examination</button>
+        <button id="back-to-generation" class="btn secondary" type="button">Back</button>
+        <button id="start-exam" class="btn primary" type="button" disabled>
+          Start Examination
+        </button>
       </div>
     </div>
 
-    <div id="side-selection" class="screen hidden">
-      <header>
-        <p class="eyebrow">Choose Your Side</p>
-        <h1>Select a Role</h1>
-      </header>
-      <div class="actions">
-        <button id="choose-prosecution" class="btn primary" type="button">Prosecution</button>
-        <button id="choose-defense" class="btn secondary" type="button">Defense</button>
-      </div>
-    </div>
-
+    <!-- JUDGE MODAL -->
     <div id="judge-modal" class="modal hidden">
       <div class="modal-overlay"></div>
       <div class="modal-card">
         <h1>Judge’s Ruling</h1>
         <h2 id="ruling-outcome"></h2>
         <p id="ruling-explanation"></p>
-        <button id="close-modal-btn" class="btn primary">Continue Examination</button>
+        <button id="close-modal-btn" class="btn primary">Continue</button>
       </div>
     </div>
 
+    <!-- SCREEN 3 - COURTROOM -->
     <div id="courtroom" class="screen hidden">
       <header>
         <p class="eyebrow">Courtroom</p>
-        <h1>Live direct examination</h1>
+        <h1 id="courtroom-title">Live Examination</h1>
       </header>
 
       <div class="courtroom-layout">
+
+        <!-- TRANSCRIPT -->
         <section class="panel transcript-panel">
           <header>
             <p class="text-muted uppercase">Live Transcript</p>
-            <h2 class="text-text">Prosecutor questioning the witness</h2>
           </header>
-          <div id="transcript-lines" class="transcript-lines">
-            <!-- Transcript lines will render here -->
-          </div>
-          <footer class="text-xs text-muted uppercase">Playing – direct examination in progress</footer>
-          <div id="end-of-exam" class="end-exam-banner hidden">
-            <button id="continue-to-summary" class="btn primary" type="button">Continue</button>
-          </div>
+
+          <div id="transcript-lines" class="transcript-lines"></div>
+
+          <footer class="text-xs text-muted uppercase" id="transcript-status">
+            Waiting for AI...
+          </footer>
+
         </section>
 
+        <!-- OBJECTIONS -->
         <section class="panel objection-panel">
           <header>
             <p class="text-muted uppercase">Controls</p>
-            <button class="btn secondary pause-toggle" type="button">Pause</button>
+            <button id="pause-btn" class="btn secondary" type="button">Pause</button>
           </header>
 
-          <div class="objection-grid"></div>
+          <div class="objection-grid" id="objection-grid"></div>
 
           <div class="ruling-summary">
             <p class="text-xs uppercase text-muted">Judge’s last ruling</p>
-            <p class="text-xl font-semibold">None yet</p>
-            <div class="counts text-xs uppercase text-muted">
-              <span class="sustained-count">Sustained: 0</span>
-              <span class="overruled-count">Overruled: 0</span>
-            </div>
+            <p class="text-xl font-semibold" id="last-ruling-text">None yet</p>
           </div>
         </section>
-    </div>
-  </div>
 
-    <div id="trial-summary" class="screen hidden">
-      <header>
-        <p class="eyebrow">Trial Summary</p>
-        <h1>Performance Review</h1>
-      </header>
-
-      <div class="summary-container">
-        <section class="grade-section">
-          <h2>Your Grade</h2>
-          <div id="final-grade" class="grade-box">—</div>
-          <p id="grade-explanation"></p>
-        </section>
-
-        <section class="stats-section">
-          <h2>Objection Stats</h2>
-          <ul>
-            <li>Total Objections: <span id="total-objections"></span></li>
-            <li>Sustained: <span id="summary-sustained"></span></li>
-            <li>Overruled: <span id="summary-overruled"></span></li>
-            <li>Accuracy Rate: <span id="accuracy-rate"></span>%</li>
-          </ul>
-        </section>
-
-        <section class="notes-section">
-          <h2>Judge’s Notes</h2>
-          <p id="judge-notes"></p>
-        </section>
-      </div>
-
-      <div class="actions">
-        <button id="return-selection" class="btn primary" type="button">Return to Case Selection</button>
       </div>
     </div>
+
   </div>
-  <script type="module" src="static/app.js" defer></script>
+
+  <script type="module" src="static/app.js"></script>
 </body>
 
 </html>

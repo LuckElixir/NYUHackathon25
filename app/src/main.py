@@ -147,10 +147,14 @@ async def objection():
     except Exception as e:
         return jsonify(response="error", message=f"Failed to generate ruling: {str(e)}"), 500
 
+    ruling = ruling_event.to_dict()
+    
+    ruling["decision"] = ruling_data["decision"]
+
     return jsonify(
         response="success",
         case=court.to_dict(),
-        ruling=ruling_event.to_dict()
+        ruling=ruling
     ), 200
 
 @app.route("/ping")
