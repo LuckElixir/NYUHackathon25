@@ -9,9 +9,14 @@ from gemini import *
 import os
 
 load_dotenv(".env")
-app: Flask = Flask(__name__, static_folder="../front/static/", static_url_path="/static", 
-                   template_folder="../front/pages/")
+app: Flask = Flask(__name__, static_folder="../front", static_url_path="/static", 
+                   template_folder="../front/")
 app.secret_key = "prettySecret"
+
+@app.route("/")
+def index():
+    return render_template("index.html")
+
 
 @app.route("/pick-side", methods=["POST"])
 async def pickSide():
@@ -126,6 +131,8 @@ async def objection():
     )
     court.timeline.append(objection_event)
 
+
+
     # ---------------------------------------------
     # Generate the ruling using gemini.generate_ruling
     # ---------------------------------------------
@@ -140,9 +147,21 @@ async def objection():
     except Exception as e:
         return jsonify(response="error", message=f"Failed to generate ruling: {str(e)}"), 500
 
+    ruling = ruling_event.to_dict()
+    
+    ruling["decision"] = ruling_data["decision"]
+
     return jsonify(
         response="success",
         case=court.to_dict(),
-        ruling=ruling_event.to_dict()
+        ruling=ruling
     ), 200
+
+@app.route("/ping")
+async def ping():
+    return jsonify(response="success", message="pong"), 200
+
     
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=6767, debug=True, threaded=False)
+
