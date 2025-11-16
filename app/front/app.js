@@ -33,6 +33,18 @@ function disableAutoLoop() {
   state.autoLoopTimer = null;
 }
 
+function buildTimelinePrompt() {
+  const timeline = state.caseData?.timeline || [];
+  if (!timeline.length) return "";
+
+  const recent = timeline
+    .slice(-10)
+    .map((ev) => `[${ev.type}] ${ev.speaker}: ${ev.content}`)
+    .join("\n");
+
+  return `You are continuing a courtroom transcript. Recent context:\n${recent}\nContinue with the next natural event.`;
+}
+
 
 // ----------------------------------------------
 // API CALL HELPERS
@@ -65,6 +77,7 @@ async function pickSide(side) {
 }
 
 async function generateAIEvent() {
+  const prompt = buildTimelinePrompt();
   const res = await fetch("/ai-event", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -73,7 +86,8 @@ async function generateAIEvent() {
       speaker:
         state.playerSide === "prosecution"
           ? state.caseData.prosecution_name
-          : state.caseData.defense_name
+          : state.caseData.defense_name,
+      prompt
     })
   });
 
@@ -108,13 +122,44 @@ async function sendObjection(type) {
     return;
   }
 
-  state.caseData = data.case;
-  renderTimeline();
+state.caseData = data.case;
+renderTimeline();
 
-  // Show Judge Ruling Modal
-  document.getElementById("ruling-outcome").textContent = data.ruling.decision;
-  document.getElementById("ruling-explanation").textContent = data.ruling.content;
-  document.getElementById("judge-modal").classList.remove("hidden");
+// --- Update the sidebar ruling summary ---
+document.getElementById("last-ruling-text").textContent = data.ruling.decision;
+
+// Show Judge Ruling Modal
+const outcomeEl = document.getElementById("ruling-outcome");
+const explanationEl = document.getElementById("ruling-explanation");
+
+outcomeEl.textContent = data.ruling.decision;
+explanationEl.textContent = data.ruling.content;
+
+// Clear old classes
+outcomeEl.classList.remove("judge-sustained", "judge-overruled");
+
+// Apply color
+const decisionLower = data.ruling.decision.toLowerCase();
+if (decisionLower.includes("overruled")) {
+  outcomeEl.classList.add("judge-overruled");
+} else if (decisionLower.includes("sustain")) {
+  outcomeEl.classList.add("judge-sustained");
+}
+
+document.getElementById("judge-modal").classList.remove("hidden");
+
+function buildTimelinePrompt() {
+  const timeline = state.caseData?.timeline || [];
+  if (!timeline.length) return "";
+
+  const recent = timeline.slice(-10)
+    .map(ev => `[${ev.type}] ${ev.speaker}: ${ev.content}`)
+    .join("\n");
+
+  return `You are continuing a courtroom transcript. Recent context:\n${recent}\nContinue with the next natural event.`;
+}
+
+document.getElementById("judge-modal").classList.remove("hidden");
 }
 
 
@@ -147,10 +192,36 @@ function renderTimeline() {
     const wrapper = document.createElement("div");
     wrapper.className = "transcript-line";
 
-    wrapper.innerHTML = `
-      <div class="meta">[${ev.type}] ${ev.speaker}:</div>
-      <div class="content">${ev.content}</div>
-    `;
+let tagClass = "";
+let lineClass = "";
+
+if (ev.type === "OBJECTION") {
+  tagClass = "event-objection";
+  lineClass = "timeline-objection";
+}
+else if (ev.type === "RULING") {
+  // Determine sustained / overruled from content text
+  const isOverruled = ev.content.toLowerCase().includes("overruled");
+  const isSustained = ev.content.toLowerCase().includes("sustain");
+
+  if (isOverruled) {
+    tagClass = "event-ruling-overruled";
+    lineClass = "timeline-ruling-overruled";
+  } else if (isSustained) {
+    tagClass = "event-ruling-sustained";
+    lineClass = "timeline-ruling-sustained";
+  }
+}
+
+wrapper.className = `transcript-line ${lineClass}`;
+
+wrapper.innerHTML = `
+  <div class="meta">
+    <span class="event-tag ${tagClass}">[${ev.type}]</span>
+    ${ev.speaker}:
+  </div>
+  <div class="content">${ev.content}</div>
+`;
 
     container.appendChild(wrapper);
 

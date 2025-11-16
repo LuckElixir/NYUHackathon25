@@ -11,7 +11,7 @@ MODEL = 'gemini-2.0-flash-lite'
 
 # Initialize Gemini client
 
-client = genai.Client(api_key=os.environ["TOKEN"])
+client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 # The client gets the API key from the environment variable `GEMINI_API_KEY`.
 
 def generate_case(query: str = None) -> dict:
@@ -46,12 +46,12 @@ def generate_case(query: str = None) -> dict:
         )
 
     prompt = [
-        {
-            "file_data": {
-                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
-                "mime_type": "application/pdf"  # or whatever the file type is
-            }
-        },
+        # {
+        #     "file_data": {
+        #         "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+        #         "mime_type": "application/pdf"  # or whatever the file type is
+        #     }
+        # },
         {
             "text": query
         }
@@ -107,24 +107,28 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
             f"{json.dumps(context, indent=2)}\n\n"
             f"{extra_prompt}\n"
             "Return a single JSON object with keys:\n"
-            "  - type: one of OPENING, CLOSING, OBJECTION, RULING, STATEMENT, GENERAL\n"
+            "  - type: one of OPENING, CLOSING, RULING, STATEMENT, GENERAL\n"
             "  - content: string containing the statement or action\n"
             f"  - speaker: a speaker or witness that is NOT {court_obj.playerSide.name}"
             "Do not include anything else, only a JSON object."
+                    "Do not include anything else, only a JSON object."
+        "THE SPEAKER MUST NOT BE THE PLAYER'S SIDE. DO NOT MAKE AN OBJECTION HERE UNDER ANY CIRCUMSTANCES."
+        "REMINDER: IF THE PLAYER IS PROSECUTION, THE SPEAKER MUST BE DEFENSE OR A WITNESS, AND VICE VERSA."
+        "DO NOT REPEAT YOURSELF FOR NO REASON."
+        "IF WHAT YOU ARE GENERATING IS AN OPENING, CLOSING, OR RULING, MAKE SURE TO LABEL IT AS SUCH."
         )
 
     prompt = [
-        {
-            "file_data": {
-                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
-                "mime_type": "application/pdf"  # or whatever the file type is
-            }
-        },
+        # {
+        #     "file_data": {
+        #         "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+        #         "mime_type": "application/pdf"  # or whatever the file type is
+        #     }
+        # },
         {
             "text": query
         }
     ]
-
 
 
 
@@ -178,12 +182,12 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
     )
 
     prompt = [
-        {
-            "file_data": {
-                "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
-                "mime_type": "application/pdf"  # or whatever the file type is
-            }
-        },
+        # {
+        #     "file_data": {
+        #         "file_uri": "https://generativelanguage.googleapis.com/v1beta/files/0dihmu62o5ah",
+        #         "mime_type": "application/pdf"  # or whatever the file type is
+        #     }
+        # },
         {
             "text": query
         }
