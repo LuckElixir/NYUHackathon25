@@ -5,7 +5,9 @@ from dotenv import load_dotenv
 from savestates import *
 import json
 
-load_dotenv("../../.env")
+
+load_dotenv(".env")
+MODEL = 'gemini-2.0-flash-lite'
 
 # Initialize Gemini client
 
@@ -56,7 +58,9 @@ def generate_case(query: str = None) -> dict:
     ]
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+
+        model=MODEL,
+
         contents=prompt
     )
 
@@ -120,8 +124,11 @@ def generate_event(court_obj, extra_prompt: str = "") -> dict:
         }
     ]
 
+
+
+
     response = client.models.generate_content(
-        model="gemini-2.5-lite",
+        model=MODEL,
         contents=prompt
     )
 
@@ -153,31 +160,21 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
         "timeline": [e.to_dict() for e in court_obj.timeline]
     }
 
+
     query = (
-        f"You are generating the next court event for the following case:\n"
+        f"You are generating the next ruling for the following objection in this court case:\n"
+
         f"{json.dumps(context, indent=2)}\n\n"
         f"A ruling needs to be made for the following objection in the court case:\n"
         f"Objection by {court_obj.playerSide.name}: [{objection_type}]\n\n"
         "Provide the ruling as a JSON object with keys:\n"
         "  - type: RULING\n"
+        "  - decision: either SUSTAINED or OVERRULED based on the objection. NOT ALL OBJECTIONS ARE MEANT TO BE SUSTAINED.\n"
         "  - content: string explaining the judge's ruling\n"
         "Return only the JSON object."
+        "Also make sure that the ruling is accurate in relation to the objection provided, and the context of the case."
     )
-    if query is None:
-        query = (
-            "Generate a simulated court case in JSON format exactly like this:\n"
-            "{\n"
-            '  "case_title": "<string>",\n'
-            '  "description": "<string>",\n'
-            '  "judge_name": "<string>",\n'
-            '  "prosecution_name": "<string>",\n'
-            '  "defense_name": "<string>",\n'
-            '  "player_side": "<PROSECUTION or DEFENSE>",\n'
-            '  "witnesses": ["<string>", "<string>", ...]\n'
-            "}\n\n"
-            "Ensure the JSON is valid and parsable. Provide names for judge, prosecution, defense, "
-            "and at least 1-3 witness names. Make it a realistic but fictional court case."
-        )
+
     prompt = [
         {
             "file_data": {
@@ -191,7 +188,7 @@ def generate_ruling(court_obj, objection_type, extra_prompt: str= "") -> dict:
     ]
 
     response = client.models.generate_content(
-        model="gemini-2.5-lite",
+        model=MODEL,
         contents=prompt
     )
 

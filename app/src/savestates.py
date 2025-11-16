@@ -9,8 +9,8 @@ loadedCases = []
 activeCase: int = 0
 
 class Side(Enum):
-    PROSECUTION = 0
-    DEFENSE = 1
+    PROSECUTION = "prosecution"
+    DEFENSE = "defense"
 
 
 class Witness:
@@ -110,7 +110,7 @@ class Court:
             raise IndexError("Speaker must be a Witness, Judge, Prosecution, or Defense")
 
     def addEvent(self, speaker: str, event_type: str, content: str):
-        self.validateSpeaker(speaker)
+        # self.validateSpeaker(speaker)
         self.timeline.append(TimelineEvent(speaker, TimelineEventType[event_type], content))
 
     def to_dict(self):
