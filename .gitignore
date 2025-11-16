@@ -2,6 +2,7 @@
 /app/src/db/
 .env
 /venv/
+/.venv/
 package-lock.json
 package.json
 /node_modules/
@@ -9,3 +10,4 @@ package.json
 __pycache__/
 *.pyc
 *.pyo
+
