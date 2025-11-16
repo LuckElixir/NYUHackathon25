@@ -1,1 +1,142 @@
-<!DOCTYPE HTML>
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Courtroom Simulator</title>
+  <link rel="stylesheet" href="static/styles.css" />
+</head>
+
+<body>
+  <div id="app" class="dark-bg">
+
+    <header id="app-header" class="app-header">
+      <h1 id="app-header-title">Courtroom Simulator</h1>
+    </header>
+
+    <!-- SCREEN 1 - CREATE CASE -->
+    <div id="case-generation" class="screen">
+      <header>
+        <p class="eyebrow">Start a Criminal Trial</p>
+        <h1>Generate a New AI Case</h1>
+      </header>
+
+      <div class="actions center">
+        <button id="btn-generate-case" class="btn primary" type="button">
+          Generate Case
+        </button>
+      </div>
+    </div>
+
+    <!-- SCREEN 2 - CASE SUMMARY + PICK SIDE -->
+    <div id="case-summary" class="screen hidden">
+      <header>
+        <p class="eyebrow">Case Overview</p>
+        <h1 id="case-title"></h1>
+      </header>
+
+      <div class="summary-panel">
+        <section>
+          <h2>Case Description</h2>
+          <p id="case-description"></p>
+        </section>
+
+        <section>
+          <h2>Judge</h2>
+          <p id="judge-name"></p>
+        </section>
+
+        <section class="two-column">
+          <div>
+            <h3>Prosecution</h3>
+            <p id="prosecution-name"></p>
+          </div>
+
+          <div>
+            <h3>Defense</h3>
+            <p id="defense-name"></p>
+          </div>
+        </section>
+
+        <section>
+          <h2>Witnesses</h2>
+          <ul id="witness-list"></ul>
+        </section>
+
+        <section id="side-selection">
+          <h2>Your Role</h2>
+          <div class="side-buttons">
+            <button id="btn-side-prosecution" class="btn secondary">Prosecution</button>
+            <button id="btn-side-defense" class="btn secondary">Defense</button>
+          </div>
+          <p id="selected-side-label" class="text-muted"></p>
+        </section>
+      </div>
+
+      <div class="actions">
+        <button id="back-to-generation" class="btn secondary" type="button">Back</button>
+        <button id="start-exam" class="btn primary" type="button" disabled>
+          Start Examination
+        </button>
+      </div>
+    </div>
+
+    <!-- JUDGE MODAL -->
+    <div id="judge-modal" class="modal hidden">
+      <div class="modal-overlay"></div>
+      <div class="modal-card">
+        <h1>Judge’s Ruling</h1>
+        <h2 id="ruling-outcome"></h2>
+        <p id="ruling-explanation"></p>
+        <button id="close-modal-btn" class="btn primary">Continue</button>
+      </div>
+    </div>
+
+    <!-- SCREEN 3 - COURTROOM -->
+    <div id="courtroom" class="screen hidden">
+      <header>
+        <p class="eyebrow">Courtroom</p>
+        <h1 id="courtroom-title">Live Examination</h1>
+      </header>
+
+      <div class="courtroom-layout">
+
+        <!-- TRANSCRIPT -->
+        <section class="panel transcript-panel">
+          <header>
+            <p class="text-muted uppercase">Live Transcript</p>
+          </header>
+
+          <div id="transcript-lines" class="transcript-lines"></div>
+
+          <footer class="text-xs text-muted uppercase" id="transcript-status">
+            Waiting for AI...
+          </footer>
+
+        </section>
+
+        <!-- OBJECTIONS -->
+        <section class="panel objection-panel">
+          <header>
+            <p class="text-muted uppercase">Controls</p>
+            <button id="pause-btn" class="btn secondary" type="button">Pause</button>
+          </header>
+
+          <div class="objection-grid" id="objection-grid"></div>
+
+          <div class="ruling-summary">
+            <p class="text-xs uppercase text-muted">Judge’s last ruling</p>
+            <p class="text-xl font-semibold" id="last-ruling-text">None yet</p>
+          </div>
+        </section>
+
+      </div>
+    </div>
+
+  </div>
+
+  <script type="module" src="static/app.js"></script>
+</body>
+
+</html>
